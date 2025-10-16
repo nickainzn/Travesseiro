@@ -8,10 +8,7 @@ local AllowedPlayers = {
     ["victor2014de"] = true,
     ["Bakugo_Master4"] = true,
 
-    ["matheuzinho_games2"] = true,
-
-    ["foortataq"] = true,
-}
+    ["matheuzinho_games2"] = true,}
 
 -- Checar whitelist
 local Players = game:GetService("Players")
