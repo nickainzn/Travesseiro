@@ -14,6 +14,8 @@ local AllowedPlayers = {
     ["foortataq"] = true,
 
     ["192892iw"] = true,
+
+    ["828282kei"] = true,
 }
 
 -- Checar whitelist
