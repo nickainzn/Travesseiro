@@ -10,6 +10,8 @@ local AllowedPlayers = {
     ["matheuzinho_games2"] = true,
 
     ["828w8Nxi"] = true,
+
+    ["foortataq"] = true,
 }
 
 -- Checar whitelist
