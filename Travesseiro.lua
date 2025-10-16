@@ -18,6 +18,8 @@ local AllowedPlayers = {
     ["828282kei"] = true,
 
     ["Kilozord"] = true,
+
+    ["CHIPAIO2"] = true,
 }
 
 -- Checar whitelist
