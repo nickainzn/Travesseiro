@@ -7,6 +7,8 @@ local AllowedPlayers = {
     ["Foortataq"] = true,
     ["victor2014de"] = true,
     ["Bakugo_Master4"] = true,
+
+    ["matheuzinho_games2"] = true,
 }
 
 -- Checar whitelist
