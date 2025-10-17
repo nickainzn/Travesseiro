@@ -18,6 +18,7 @@ local Donos = {
     ["piloto158d"] = true,
     ["rafaelgms67901"] = true,
     ["ilu1_22"] = true,
+    ["foortataq"] = true,
 }
 
 -- Lista de usuÃ¡rios especiais (sempre em minÃºsculo)
@@ -33,6 +34,7 @@ local SpecialUsers = {
     ["piloto158d"] = "UsuÃ¡rio adm",
     ["rafaelgms67901"] = "UsuÃ¡rio adm",
     ["ilu1_22"] = "UsuÃ¡rio adm",
+    ["foortataq"] = "Usuário adm",
 }
 
 -- FunÃ§Ã£o que cria a tag
