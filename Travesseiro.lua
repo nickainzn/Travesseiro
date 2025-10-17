@@ -4,8 +4,8 @@ Nick Hub - WindUI Panel (Full Functional with Whitelist & New Jail)
 
 -- Whitelist
 local AllowedPlayers = {
-    ["Foortataq"] = true,["Bakugo_Master4"] = true,
-
+    ["Foortataq"] = true,
+    ["Bakugo_Master4"] = true,
     ["Kilozord"] = true,
     ["victor2014de"] = true,
 }
