@@ -1,331 +1,278 @@
 --[[
-Nick Hub - WindUI Panel (Full Functional with Whitelist & New Jail + FE System)
+Nick Hub - WindUI Panel (Full Functional with Whitelist Sync FE System + Auto Player Dropdown)
 ]]
 
 -- Whitelist
 local AllowedPlayers = {
-    ["Foortataq"] = true,
-    ["Bakugo_Master4"] = true,
-    ["Kilozord"] = true,
-    ["victor2014de"] = true,
-
-    ["Juninho_3114"] = true,
-
-    ["MeliodaGamer42"] = true,
-
-    ["ESTOQUE333E"] = true,
-
-    ["IAIAOAOAUASIIS"] = true,
-
-    ["eusouluizcria"] = true,
+	["Foortataq"] = true,
+	["Bakugo_Master4"] = true,
+	["Kilozord"] = true,
+	["victor2014de"] = true,
+	["Juninho_3114"] = true,  
+	["MeliodaGamer42"] = true,  
+	["ESTOQUE333E"] = true,  
+	["IAIAOAOAUASIIS"] = true,  
+	["eusouluizcria"] = true,
 }
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- Bloqueia quem não está na whitelist
 if not AllowedPlayers[LocalPlayer.Name] then
-    return -- jogador não autorizado
+	return
 end
 
 -- Carregar WindUI
 local WindUI
 do
-    local ok, result = pcall(function()
-        return require("./src/init")
-    end)
-    if ok then
-        WindUI = result
-    else
-        WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-    end
+	local ok, result = pcall(function()
+		return require("./src/init")
+	end)
+	if ok then
+		WindUI = result
+	else
+		WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+	end
 end
 
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
+-- Helper
 local function getCharacter(plr)
-    return plr and plr.Character or plr.CharacterAdded:Wait()
+	return plr and (plr.Character or plr.CharacterAdded:Wait())
 end
 
--- BoolValues do FE System
-local IsPaidPanel = Instance.new("BoolValue")
-IsPaidPanel.Name = "IsPaidPanel"
-IsPaidPanel.Value = true -- apenas painel pode executar comandos
-IsPaidPanel.Parent = LocalPlayer
-
-local FEAccess = Instance.new("BoolValue")
-FEAccess.Name = "FEAccess"
-FEAccess.Value = true -- painel/hub podem ser afetados
-FEAccess.Parent = LocalPlayer
-
--- Cria FEAccess para outros jogadores
-local function AddFEAccess(player)
-    if not player:FindFirstChild("FEAccess") then
-        local fe = Instance.new("BoolValue")
-        fe.Name = "FEAccess"
-        fe.Value = true
-        fe.Parent = player
-    end
+-- FE Sync System
+local function AddSyncValues(player)
+	local feTag = Instance.new("BoolValue")
+	feTag.Name = "NickFEUser"
+	feTag.Value = AllowedPlayers[player.Name] or false
+	feTag.Parent = player
 end
 
-for _, plr in pairs(Players:GetPlayers()) do
-    if plr ~= LocalPlayer then AddFEAccess(plr) end
+for _, plr in ipairs(Players:GetPlayers()) do
+	AddSyncValues(plr)
 end
 
-Players.PlayerAdded:Connect(AddFEAccess)
+Players.PlayerAdded:Connect(AddSyncValues)
 
--- Helper FE
+-- Função pra verificar se pode afetar
 local function CanAffectTarget(target)
-    return LocalPlayer:FindFirstChild("IsPaidPanel") and LocalPlayer.IsPaidPanel.Value
-       and target:FindFirstChild("FEAccess") and target.FEAccess.Value
+	if not target or not target:IsDescendantOf(Players) then return false end
+	local lpTag = LocalPlayer:FindFirstChild("NickFEUser")
+	local tgTag = target:FindFirstChild("NickFEUser")
+	if not lpTag or not tgTag then return false end
+	return lpTag.Value and tgTag.Value
 end
 
--- Função auxiliar para enviar comando no chat
+-- Chat helper
 local function SendCommand(msg)
-    local tcs = game:GetService("TextChatService")
-    if tcs.ChatVersion == Enum.ChatVersion.TextChatService then
-        local channel = tcs.TextChannels.RBXGeneral
-        if channel then channel:SendAsync(msg) end
-    else
-        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-    end
+	local tcs = game:GetService("TextChatService")
+	if tcs.ChatVersion == Enum.ChatVersion.TextChatService then
+		local channel = tcs.TextChannels.RBXGeneral
+		if channel then channel:SendAsync(msg) end
+	else
+		game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+	end
 end
 
--- Criar Window
+-- WindUI
 local Window = WindUI:CreateWindow({
-    Title = "Nick Admin",
-    Author = "Nick",
-    Folder = "NickHub",
-    NewElements = true,
-    Transparent = true,
-    HideSearchBar = false,
-    OpenButton = {
-        Title = "Nick Admin",
-        Icon = "monitor",
-        CornerRadius = UDim.new(1,0),
-        StrokeThickness = 3,
-        Enabled = true,
-        Draggable = true,
-        Color = ColorSequence.new(Color3.fromHex("#30FF6A"), Color3.fromHex("#e7ff2f"))
-    }
+	Title = "Nick Admin",
+	Author = "Nick",
+	Folder = "NickHub",
+	NewElements = true,
+	Transparent = true,
+	HideSearchBar = false,
+	OpenButton = {
+		Title = "Nick Admin",
+		Icon = "monitor",
+		CornerRadius = UDim.new(1,0),
+		StrokeThickness = 3,
+		Enabled = true,
+		Draggable = true,
+		Color = ColorSequence.new(Color3.fromHex("#30FF6A"), Color3.fromHex("#e7ff2f"))
+	}
 })
 
--- Aba Funções
-local FuncoesTab = Window:Tab({ Title = "Funções", Icon = "hammer" })
-local ComandosSection = FuncoesTab:Section({ Title = "Comandos", Icon = "album" })
+-- Aba principal
+local Tab = Window:Tab({ Title = "Funções", Icon = "hammer" })
+local Section = Tab:Section({ Title = "Comandos", Icon = "album" })
 
--- Dropdown de jogadores
+-- Dropdown dinâmico de jogadores
 local playerNames = {}
-for _, player in pairs(Players:GetPlayers()) do
-    table.insert(playerNames, player.Name)
+for _, plr in ipairs(Players:GetPlayers()) do
+	table.insert(playerNames, plr.Name)
 end
 
 local SelectedPlayer
-Players.PlayerAdded:Connect(function(player)
-    table.insert(playerNames, player.Name)
-end)
+local playerDropdown
 
-ComandosSection:Dropdown({
-    Title = "Jogadores",
-    Values = playerNames,
-    Callback = function(value)
-        SelectedPlayer = Players:FindFirstChild(value)
-    end
-})
-
--------------------------
--- FUNÇÕES DO PAINEL (COM FE)
--------------------------
-
-local frozenPlayers = {}
-local JailedPlayers = {}
-
-local function Verificar()
-    for _, plr in pairs(Players:GetPlayers()) do
-        local backpack = plr:FindFirstChildOfClass("Backpack")
-        local scripts = plr:FindFirstChildOfClass("PlayerScripts")
-        if backpack or scripts then
-            SendCommand("Nick_Hub")
-        end
-    end
+local function UpdateDropdown()
+	playerNames = {}
+	for _, plr in ipairs(Players:GetPlayers()) do
+		table.insert(playerNames, plr.Name)
+	end
+	if playerDropdown then
+		playerDropdown:SetValues(playerNames)
+	end
 end
 
+Players.PlayerAdded:Connect(UpdateDropdown)
+Players.PlayerRemoving:Connect(UpdateDropdown)
+
+playerDropdown = Section:Dropdown({
+	Title = "Jogadores",
+	Values = playerNames,
+	Callback = function(value)
+		SelectedPlayer = Players:FindFirstChild(value)
+	end
+})
+
+-- Funções sincronizadas (FE)
+local frozenPlayers, JailedPlayers = {}, {}
+
 local function Bring(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        local myChar = getCharacter(LocalPlayer)
-        if char and myChar and myChar:FindFirstChild("HumanoidRootPart") then
-            char:MoveTo(myChar.HumanoidRootPart.Position + Vector3.new(0, 2, 0))
-        end
-    end
+	if not CanAffectTarget(target) then return end
+	local char = getCharacter(target)
+	local myChar = getCharacter(LocalPlayer)
+	if char and myChar and myChar:FindFirstChild("HumanoidRootPart") then
+		char:MoveTo(myChar.HumanoidRootPart.Position + Vector3.new(0, 2, 0))
+	end
 end
 
 local function Freeze(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        for _, part in pairs(char:GetChildren()) do
-            if part:IsA("BasePart") then part.Anchored = true end
-        end
-        frozenPlayers[target] = true
-    end
+	if not CanAffectTarget(target) then return end
+	local char = getCharacter(target)
+	for _, part in ipairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+		end
+	end
+	frozenPlayers[target] = true
 end
 
 local function Unfreeze(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        for _, part in pairs(char:GetChildren()) do
-            if part:IsA("BasePart") then part.Anchored = false end
-        end
-        frozenPlayers[target] = nil
-    end
+	if not CanAffectTarget(target) then return end
+	local char = getCharacter(target)
+	for _, part in ipairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Anchored = false
+		end
+	end
+	frozenPlayers[target] = nil
 end
 
 local function Fling(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        if char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.Velocity = Vector3.new(math.random(-500,500), 500, math.random(-500,500))
-        end
-    end
+	if not CanAffectTarget(target) then return end
+	local char = getCharacter(target)
+	if char:FindFirstChild("HumanoidRootPart") then
+		char.HumanoidRootPart.Velocity = Vector3.new(math.random(-500,500), 500, math.random(-500,500))
+	end
 end
 
 local function Kick(target)
-    if target and CanAffectTarget(target) then
-        target:Kick("Você foi kickado pelo Nick Hub🤍")
-    end
+	if not CanAffectTarget(target) then return end
+	target:Kick("Você foi kickado pelo Nick Hub 🤍")
 end
 
 local function Kill(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        if char:FindFirstChildOfClass("Humanoid") then
-            char:FindFirstChildOfClass("Humanoid").Health = 0
-        end
-    end
-end
-
-local function KillPlus(target)
-    if target and CanAffectTarget(target) then
-        local char = getCharacter(target)
-        if char:FindFirstChildOfClass("Humanoid") then
-            for i = 1, 5 do
-                char:FindFirstChildOfClass("Humanoid").Health = 0
-                task.wait(0.3)
-            end
-            local explosion = Instance.new("Explosion", workspace)
-            explosion.Position = char:FindFirstChild("HumanoidRootPart").Position
-            explosion.BlastRadius = 6
-            explosion.BlastPressure = 999999
-        end
-    end
-end
-
-local function makePart(props)
-    local p = Instance.new("Part")
-    for k,v in pairs(props) do if k~="Parent" then p[k]=v end end
-    if props.Parent then p.Parent = props.Parent end
-    return p
+	if not CanAffectTarget(target) then return end
+	local char = getCharacter(target)
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then hum.Health = 0 end
 end
 
 local function JailPlayerInternal(player)
-    if player and CanAffectTarget(player) then
-        if not player.Character then return end
-        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        if JailedPlayers[player] then return end
+	if not CanAffectTarget(player) then return end
+	if not player.Character or JailedPlayers[player] then return end
+	local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
-        local size,height,wallT,edgeT = 7,7,0.5,0.18
-        local center = hrp.Position + Vector3.new(0,2,0)
+	local size,height,wallT,edgeT = 7,7,0.5,0.18  
+	local center = hrp.Position + Vector3.new(0,2,0)  
+	local model = Instance.new("Model", workspace)
+	model.Name = "Jail_"..player.Name
 
-        local model = Instance.new("Model", workspace)
-        model.Name = "Jail_"..player.Name
+	local function makePart(props)
+		local p = Instance.new("Part")
+		for k,v in pairs(props) do if k~="Parent" then p[k]=v end end
+		p.Parent = props.Parent
+		return p
+	end
 
-        local floor = makePart{Size=Vector3.new(size,wallT,size),Position=center+Vector3.new(0,-height/2+wallT/2,0),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
-        local ceiling = makePart{Size=Vector3.new(size,wallT,size),Position=center+Vector3.new(0,height/2-wallT/2,0),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
+	local floor = makePart{Size=Vector3.new(size,wallT,size),Position=center+Vector3.new(0,-height/2+wallT/2,0),
+	Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
+	
+	local ceiling = floor:Clone()
+	ceiling.Position = center+Vector3.new(0,height/2-wallT/2,0)
+	ceiling.Parent = model
 
-        local front = makePart{Size=Vector3.new(size,height,wallT),Position=center+Vector3.new(0,0,size/2-wallT/2),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
-        local back = makePart{Size=Vector3.new(size,height,wallT),Position=center+Vector3.new(0,0,-size/2+wallT/2),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
-        local right = makePart{Size=Vector3.new(wallT,height,size),Position=center+Vector3.new(size/2-wallT/2,0,0),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
-        local left = makePart{Size=Vector3.new(wallT,height,size),Position=center+Vector3.new(-size/2+wallT/2,0,0),
-            Anchored=true,CanCollide=true,Transparency=0.55,Material=Enum.Material.SmoothPlastic,BrickColor=BrickColor.new("Really black"),Parent=model}
+	local sides = {"X","Z"}
+	for _, axis in ipairs(sides) do
+		for sign = -1,1,2 do
+			local part = makePart{
+				Size = Vector3.new((axis=="X") and wallT or size, height, (axis=="Z") and wallT or size),
+				Position = center + Vector3.new(
+					(axis=="X") and (sign*(size/2-wallT/2)) or 0,
+					0,
+					(axis=="Z") and (sign*(size/2-wallT/2)) or 0
+				),
+				Anchored = true, CanCollide = true, Transparency = 0.55,
+				Material = Enum.Material.SmoothPlastic, BrickColor = BrickColor.new("Really black"),
+				Parent = model
+			}
+		end
+	end
 
-        local cornerOffsets = {
-            Vector3.new( size/2-edgeT/2,0, size/2-edgeT/2),
-            Vector3.new(-size/2+edgeT/2,0, size/2-edgeT/2),
-            Vector3.new( size/2-edgeT/2,0,-size/2+edgeT/2),
-            Vector3.new(-size/2+edgeT/2,0,-size/2+edgeT/2),
-        }
-        for _, off in ipairs(cornerOffsets) do
-            local p = makePart{Size=Vector3.new(edgeT,height,edgeT),Position=center+off,
-                Anchored=true,CanCollide=true,Material=Enum.Material.Neon,BrickColor=BrickColor.new("Really black"),Parent=model}
-            p.Transparency = 0
-            local tween = TweenService:Create(p, TweenInfo.new(1.05, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.3})
-            tween:Play()
-        end
-
-        hrp.CFrame = CFrame.new(center.X, floor.Position.Y + wallT/2 + 2, center.Z)
-        JailedPlayers[player] = model
-    end
+	hrp.CFrame = CFrame.new(center)
+	JailedPlayers[player] = model
 end
 
 local function UnjailPlayerInternal(player)
-    if player and CanAffectTarget(player) then
-        if JailedPlayers[player] then
-            JailedPlayers[player]:Destroy()
-            JailedPlayers[player] = nil
-        end
-    end
+	if CanAffectTarget(player) and JailedPlayers[player] then
+		JailedPlayers[player]:Destroy()
+		JailedPlayers[player] = nil
+	end
 end
 
----------------------
--- BOTÕES DO PAINEL
----------------------
-
+-- Botões
 local actions = {
-    {Title="Verificar",Func=function() Verificar() end},
-    {Title="Bring",Func=function() if SelectedPlayer then Bring(SelectedPlayer) end end},
-    {Title="Freeze",Func=function() if SelectedPlayer then Freeze(SelectedPlayer) end end},
-    {Title="UnFreeze",Func=function() if SelectedPlayer then Unfreeze(SelectedPlayer) end end},
-    {Title="Fling",Func=function() if SelectedPlayer then Fling(SelectedPlayer) end end},
-    {Title="Kick",Func=function() if SelectedPlayer then Kick(SelectedPlayer) end end},
-    {Title="Kill",Func=function() if SelectedPlayer then Kill(SelectedPlayer) end end},
-    {Title="KillPlus",Func=function() if SelectedPlayer then KillPlus(SelectedPlayer) end end},
-    {Title="Jail",Func=function() if SelectedPlayer then JailPlayerInternal(SelectedPlayer) end end},
-    {Title="Unjail",Func=function() if SelectedPlayer then UnjailPlayerInternal(SelectedPlayer) end end},
+	{Title="Bring",Func=function() if SelectedPlayer then Bring(SelectedPlayer) end end},
+	{Title="Freeze",Func=function() if SelectedPlayer then Freeze(SelectedPlayer) end end},
+	{Title="UnFreeze",Func=function() if SelectedPlayer then Unfreeze(SelectedPlayer) end end},
+	{Title="Fling",Func=function() if SelectedPlayer then Fling(SelectedPlayer) end end},
+	{Title="Kick",Func=function() if SelectedPlayer then Kick(SelectedPlayer) end end},
+	{Title="Kill",Func=function() if SelectedPlayer then Kill(SelectedPlayer) end end},
+	{Title="Jail",Func=function() if SelectedPlayer then JailPlayerInternal(SelectedPlayer) end end},
+	{Title="Unjail",Func=function() if SelectedPlayer then UnjailPlayerInternal(SelectedPlayer) end end},
 }
 
-for _, info in pairs(actions) do
-    ComandosSection:Button({
-        Title = info.Title,
-        Desc = "Executa o comando " .. info.Title,
-        Callback = info.Func
-    })
+for _, info in ipairs(actions) do
+	Section:Button({
+		Title = info.Title,
+		Desc = "Executa o comando " .. info.Title,
+		Callback = info.Func
+	})
 end
 
----------------------
--- CHAT
----------------------
-
-local ChatSection = FuncoesTab:Section({ Title = "Chat", Icon = "bird" })
+-- Chat
+local ChatSection = Tab:Section({ Title = "Chat", Icon = "bird" })
 local ChatMessage = ""
 
 ChatSection:Input({
-    Title = "Mensagem",
-    Placeholder = "Digite a mensagem...",
-    Type = "Input",
-    Callback = function(msg) ChatMessage = msg end
+	Title = "Mensagem",
+	Placeholder = "Digite a mensagem...",
+	Type = "Input",
+	Callback = function(msg) ChatMessage = msg end
 })
 
 ChatSection:Button({
-    Title = "Enviar Chat",
-    Desc = "Envia a mensagem digitada para o jogador selecionado",
-    Callback = function()
-        if not SelectedPlayer or ChatMessage == "" then return end
-        SendCommand(";chat " .. SelectedPlayer.Name .. " " .. ChatMessage)
-    end
+	Title = "Enviar Chat",
+	Desc = "Envia mensagem via FE Sync",
+	Callback = function()
+		if not SelectedPlayer or ChatMessage == "" or not CanAffectTarget(SelectedPlayer) then return end
+		SendCommand(";chat " .. SelectedPlayer.Name .. " " .. ChatMessage)
+	end
 })
