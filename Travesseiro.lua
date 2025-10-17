@@ -6,10 +6,7 @@ Nick Hub - WindUI Panel (Full Functional with Whitelist & New Jail)
 local AllowedPlayers = {
     ["Foortataq"] = true,["Bakugo_Master4"] = true,
 
-    ["Kilozord"] = true,
-
-    ["victor2014de"] = true,
-}
+    ["Kilozord"] = true,}
 
 -- Checar whitelist
 local Players = game:GetService("Players")
