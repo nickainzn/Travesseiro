@@ -8,6 +8,8 @@ local AllowedPlayers = {
     ["Bakugo_Master4"] = true,
     ["Kilozord"] = true,
     ["victor2014de"] = true,
+
+    ["Juninho_3114"] = true,
 }
 
 local Players = game:GetService("Players")
