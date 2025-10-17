@@ -13,6 +13,8 @@ local AllowedPlayers = {
 	["ESTOQUE333E"] = true,  
 	["IAIAOAOAUASIIS"] = true,  
 	["eusouluizcria"] = true,
+
+    ["CHIPAIO2"] = true,
 }
 
 local Players = game:GetService("Players")
